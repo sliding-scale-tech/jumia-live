@@ -1,3 +1,10 @@
+# Own project name => own containers, network and volumes. Never touches anything else running on the server.
+name: jumia-live
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }   # keep logs from filling the disk
+
 services:
   # Cloudflare solver (Chromium on a virtual display). Internal only: it has no authentication.
   solver:
@@ -5,7 +12,9 @@ services:
       context: ./tools/cf-clearance-scraper
       dockerfile: ../../Dockerfile.solver
     shm_size: 1gb            # Chromium needs a bigger /dev/shm
+    mem_limit: 1536m         # cap so it can never starve other services on a small server
     restart: unless-stopped
+    logging: *logging
     expose: ["3000"]
 
   # The HTTP API the Vercel website talks to (search, product, live stream, price history) + SQLite database.
@@ -18,21 +27,28 @@ services:
       PROXY_URL: ${PROXY_URL:-}   # optional: http://user:password@host:port (used for the solver AND all page requests)
     volumes:
       - ./data:/data         # jumia.db (SQLite) + session.json live here - back this folder up
+    # Published on the server's loopback only: a reverse proxy on the same machine (Caddy / nginx) forwards HTTPS to it.
+    ports: ["127.0.0.1:${API_PORT:-8000}:8000"]
+    mem_limit: 512m
     depends_on: [solver]
     restart: unless-stopped
-    expose: ["8000"]
+    logging: *logging
 
-  # HTTPS in front of the API (automatic Let's Encrypt certificate). Point a DNS A record for API_DOMAIN at this server.
+  # OPTIONAL bundled HTTPS proxy, only for a server with nothing else on ports 80/443:
+  #   docker compose --profile caddy up -d
+  # If the server already runs Caddy/nginx, skip this and add a site block pointing at 127.0.0.1:API_PORT instead.
   caddy:
     image: caddy:2
+    profiles: ["caddy"]
     ports: ["80:80", "443:443"]
     environment:
-      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in .env}
+      API_DOMAIN: ${API_DOMAIN:-localhost}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
     depends_on: [api]
     restart: unless-stopped
+    logging: *logging
 
   # One-off bulk crawls from the command line:  docker compose run --rm scraper --search phone
   scraper:

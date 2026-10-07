@@ -19,17 +19,27 @@ Browser ──► Next.js on Vercel ──(server-side, API key)──► Caddy 
 
    This also copies your local `.env`, which already contains the `PROXY_URL` line.
 
-3. On the server:
+3. On the server (everything runs under its own compose project `jumia-live`, so it doesn't touch other containers):
 
        cd ~/scraper
        [ -f .env ] || cp .env.example .env
-       nano .env                              # add API_KEY (openssl rand -hex 32) and API_DOMAIN; keep PROXY_URL
-       docker compose up -d --build           # starts solver + api + caddy
+       nano .env            # add API_KEY (openssl rand -hex 32); keep PROXY_URL; optionally API_PORT (default 8000)
+       docker compose up -d --build        # starts solver + api; the API listens on 127.0.0.1:API_PORT only
 
-4. DNS: create an `A` record for `API_DOMAIN` → the server's IP (Caddy then gets the HTTPS certificate automatically).
-5. Check: `curl https://API_DOMAIN/health` → `{"ok":true}`. Put the same `API_KEY` and `https://API_DOMAIN` into the website's Vercel env vars (see `../website/README.md`).
+4. **HTTPS** – pick one:
+   * **Server already runs Caddy/nginx** (ports 80/443 taken): add one site block to it. Caddy example (then `caddy validate` and `systemctl reload caddy`):
 
-Open ports 80 and 443 in the Hostinger firewall. Port 8000 / 3000 stay internal.
+         api.example.com {          # or <name>.<ip-with-dashes>.sslip.io: free hostname, no DNS needed
+             reverse_proxy 127.0.0.1:8000 {
+                 flush_interval -1  # IMPORTANT: lets the live stream through unbuffered
+             }
+         }
+
+   * **Nothing else on 80/443:** set `API_DOMAIN` in `.env`, create a DNS `A` record for it and run `docker compose --profile caddy up -d` (bundled Caddy gets the certificate automatically).
+5. Check: `curl https://YOUR-HOST/health` → `{"ok":true}`. Put the same `API_KEY` and `https://YOUR-HOST` into the website's Vercel env vars (see `../website/README.md`).
+
+Only the HTTPS proxy needs ports 80/443; the API (8000) and solver (3000) are never exposed publicly.
+Update later: re-copy the files, then `docker compose up -d --build`. Logs: `docker compose logs -f api`.
 
 ### Proxy
 Set `PROXY_URL=http://user:password@host:port` in `.env` (on the server only; it is git-ignored) and restart: `docker compose up -d`.
