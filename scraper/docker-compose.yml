@@ -1,0 +1,49 @@
+services:
+  # Cloudflare solver (Chromium on a virtual display). Internal only: it has no authentication.
+  solver:
+    build:
+      context: ./tools/cf-clearance-scraper
+      dockerfile: ../../Dockerfile.solver
+    shm_size: 1gb            # Chromium needs a bigger /dev/shm
+    restart: unless-stopped
+    expose: ["3000"]
+
+  # The HTTP API the Vercel website talks to (search, product, live stream, price history) + SQLite database.
+  api:
+    build: .
+    entrypoint: ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      SOLVER_URL: http://solver:3000/cf-clearance-scraper
+      API_KEY: ${API_KEY:?set API_KEY in .env}
+      PROXY_URL: ${PROXY_URL:-}   # optional: http://user:password@host:port (used for the solver AND all page requests)
+    volumes:
+      - ./data:/data         # jumia.db (SQLite) + session.json live here - back this folder up
+    depends_on: [solver]
+    restart: unless-stopped
+    expose: ["8000"]
+
+  # HTTPS in front of the API (automatic Let's Encrypt certificate). Point a DNS A record for API_DOMAIN at this server.
+  caddy:
+    image: caddy:2
+    ports: ["80:80", "443:443"]
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?set API_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [api]
+    restart: unless-stopped
+
+  # One-off bulk crawls from the command line:  docker compose run --rm scraper --search phone
+  scraper:
+    build: .
+    profiles: ["cli"]
+    environment:
+      SOLVER_URL: http://solver:3000/cf-clearance-scraper
+      PROXY_URL: ${PROXY_URL:-}
+    volumes:
+      - ./data:/data
+    depends_on: [solver]
+
+volumes:
+  caddy_data:

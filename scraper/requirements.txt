@@ -1,0 +1,6 @@
+requests
+wrapper-tls-requests
+beautifulsoup4
+lxml
+fastapi
+uvicorn

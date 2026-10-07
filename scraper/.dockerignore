@@ -1,0 +1,7 @@
+.venv
+tools
+data
+__pycache__
+session.json
+products*.json
+.env

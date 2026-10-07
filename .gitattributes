@@ -1,0 +1,4 @@
+# keep Linux-friendly line endings (Dockerfiles, Caddyfile, scripts) even when edited or cloned on Windows
+* text=auto eol=lf
+*.jpg binary
+*.png binary

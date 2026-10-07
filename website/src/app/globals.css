@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* Design tokens - see ../../design.md section 2 */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --color-brand-50: #fff3e0;
+  --color-brand-100: #ffe0b2;
+  --color-brand-200: #ffcc80;
+  --color-brand-500: #f57c00;
+  --color-brand-600: #e65100;
+  --color-brand-700: #d46a00;
+  --color-brand-800: #bf360c;
+
+  --color-good-50: #e8f5e9;
+  --color-good-200: #a5d6a7;
+  --color-good-700: #2e7d32;
+  --color-good-900: #1b5e20;
+
+  --color-info-50: #e3f2fd;
+  --color-info-200: #90caf9;
+  --color-info-800: #1565c0;
+  --color-info-900: #0d47a1;
+
+  --color-ink: #1a1a1a;
+  --color-ink-2: #374151;
+  --color-ink-3: #6b7280;
+  --color-ink-4: #9ca3af;
+  --color-line: #e2e5ea;
+  --color-line-soft: #f3f4f6;
+  --color-surface-2: #f8f9fa;
+  --color-page: #f4f5f7;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+body {
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(245 124 0 / 0.35);
+  border-radius: 6px;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+@keyframes pulse-soft {
+  50% {
+    opacity: 0.5;
+  }
+}
+.skeleton {
+  background: var(--color-line-soft);
+  border-radius: 4px;
+  animation: pulse-soft 1.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- live search / radar loader (design.md section 5.5) ---- */
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.card-in {
+  animation: card-in 380ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes radar-sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes radar-ping {
+  0% {
+    transform: scale(0.15);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+@keyframes radar-blip {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  8%,
+  55% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes bar-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+@keyframes live-dot {
+  50% {
+    transform: scale(1.6);
+    opacity: 0.4;
+  }
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(90deg, var(--color-line-soft) 25%, var(--color-brand-50) 50%, var(--color-line-soft) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+  border-radius: 4px;
+}

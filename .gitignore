@@ -1,0 +1,43 @@
+# ---- secrets & local config (never commit) -------------------------------
+.env
+.env.*
+!.env.example
+
+# ---- scraper runtime data: database, Cloudflare cookies, crawl output -----
+scraper/data/*
+!scraper/data/.gitkeep
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+session.json
+products*.json
+
+# ---- Python ----------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Node / Next.js --------------------------------------------------------
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+npm-debug.log*
+.vercel/
+
+# ---- logs, OS and editor files ---------------------------------------------
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.fallow/
+.claude/
+
+.fallow/
